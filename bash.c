@@ -70,3 +70,29 @@ char *lsh_read_line(void){
     }
   }
 }
+
+// PARSING THE line
+
+#define LSH_TOK_BUFSIZE 64
+#define LSH_TOK_DELIM " \t\r\n\a"
+
+char **lsh_split_line(char *line) {
+  int bufsize = LSH_TOK_BUFSIZE, position = 0;
+  char **tooken = malloc(bufsize * sizeof(char*));
+  char *tokens;
+
+  if (!tokens) {
+    fprintf(stderr, "lsh: allocation error\n");
+    exit(EXIT_FAILURE);
+  }
+
+  token = strtok(line, LSH_TOK_DELIM);
+  while (token != NULL) {
+    tokens[position] = token;
+    position++;
+
+    if (position >== bufsize) {
+
+    }
+  }
+}
