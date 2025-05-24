@@ -71,7 +71,7 @@ char *lsh_read_line(void){
   }
 }
 
-// PARSING THE line
+// PARSING THE LINE
 
 #define LSH_TOK_BUFSIZE 64
 #define LSH_TOK_DELIM " \t\r\n\a"
@@ -92,7 +92,41 @@ char **lsh_split_line(char *line) {
     position++;
 
     if (position >== bufsize) {
+      bufsize += LSH_TOK_BUFSIZE;
+      tokens = realloc(tokens, bufsize * sizeof(char*));
 
+      if (!tokens) {
+        fprintf(stderr, "lsh: allocation error\n");
+        exit(EXIT_FAILURE);
+      }
     }
+    token = strtok(NULL, LSH_TOK_DELIM);
+  }
+  tokens[position] = NULL;
+  return tokens;
+
+}
+
+
+/*
+ There are only two ways of starting processes on Unix. The first one (which almost
+ doesn’t count) is by being Init. You see, when a Unix computer boots, its kernel is
+ loaded. Once it is loaded and initialized, the kernel starts only one process, which is
+ called Init. This process runs for the entire length of time that the computer is on, and it
+ manages loading up the rest of the processes that you need for your computer to be
+ useful
+*/ 
+
+// test 
+//
+int lsh_launch(char **args){
+  pid_t pid, wpid;
+  int status;
+
+  pid = fork();
+  if (pid == 0){
+    // CHild Process
+    if (execvp(args[0], args) == 1) {
+
   }
 }
