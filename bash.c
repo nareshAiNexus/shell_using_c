@@ -1,5 +1,6 @@
-#include <stdio.h>;
-#include <conio.h>;
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 // Creating a shell using C 
 int main(int argc, char **argv){
@@ -78,8 +79,8 @@ char *lsh_read_line(void){
 
 char **lsh_split_line(char *line) {
   int bufsize = LSH_TOK_BUFSIZE, position = 0;
-  char **tooken = malloc(bufsize * sizeof(char*));
-  char *tokens;
+  char **tokens = malloc(bufsize * sizeof(char*));
+  char *token;
 
   if (!tokens) {
     fprintf(stderr, "lsh: allocation error\n");
@@ -100,7 +101,7 @@ char **lsh_split_line(char *line) {
         exit(EXIT_FAILURE);
       }
     }
-    token = strtok(NULL, LSH_TOK_DELIM);
+    token = strtol(NULL, LSH_TOK_DELIM);
   }
   tokens[position] = NULL;
   return tokens;
@@ -108,17 +109,6 @@ char **lsh_split_line(char *line) {
 }
 
 
-/*
- There are only two ways of starting processes on Unix. The first one (which almost
- doesn’t count) is by being Init. You see, when a Unix computer boots, its kernel is
- loaded. Once it is loaded and initialized, the kernel starts only one process, which is
- called Init. This process runs for the entire length of time that the computer is on, and it
- manages loading up the rest of the processes that you need for your computer to be
- useful
-*/ 
-
-// test 
-//
 int lsh_launch(char **args){
   pid_t pid, wpid;
   int status;
@@ -127,6 +117,85 @@ int lsh_launch(char **args){
   if (pid == 0){
     // CHild Process
     if (execvp(args[0], args) == 1) {
-
+      perror("lsh");
+    }
+    exit(EXIT);
+  }else if(pid < 0){
+    // Error forking
+    perror("lsh");
+  }else{
+    // Parent process
+    do {
+      wpid = waitpid(pid, &status, WUNTRACED);
+    } while (!WIFEXITED(status) && !WIFSIGNALED(status));
   }
+  return 1;
+}
+
+// Function Declaration for builtin shell commands;
+
+int lsh_cd(char **args);
+int lsh_help(char **args);
+int lsh_exit(char **args);
+
+// List of builtin commands, followes by their corresponding functions
+
+char *builtin_str[] = {
+  "cd",
+  "help",
+  "exit"
+};
+
+int (*builtin_func[]) (char **) = {
+  &lsh_cd,
+  &lsh_help,
+  &lsh_exit
+};
+
+int lsh_num_builtins() {
+  return sizeof(builtin_str) / sizeof(char *);
+}
+
+// Builtin function implementation
+
+int lsh_cd(char **args){
+  if(args[1] == NULL) {
+    fprintf(stderr, "lsh: expected arguments to \"cd\"\n");
+  }else {
+    if (chdir(args[1] != 0)){
+      perror("lsh");
+    }
+  }return 1;
+}
+
+int lsh_help(char **args) {
+  int i;
+  printf("__Naresh's LSH__\n");
+  printf("Type program names and arguments, and hit enter. \n");
+  printf("The following are built in: \n");
+  
+  for (i=0; i<lsh_num_builtins(); i++){
+    printf(" %s\n", builtin_str[i]);
+  }
+  printf("Use the man commands for information on other programs. \n");
+  return 1;
+}
+
+int lsh_exit(char **args){
+  return 0;
+}
+
+int lsh_execute(char **args){
+  int i;
+  if(args[0] == NULL){
+    // AN empty command was entered
+    return 1;
+  }
+
+  for (i=0; i<lsh_num_builtins(); i++){
+    if (strcmp(args[0], builtin_str[i]) == 0) {
+      return (*builtin_func[i])(args);
+    }
+  }
+  return lsh_launch(args);
 }
